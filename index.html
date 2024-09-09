@@ -45,18 +45,23 @@
 
         <script>
             let EyesonIframe;
-            const script = document.createElement("script");
-            script.src = "https://app.eyeson.team/iframe-api.js";
-            script.async = true;
-            document.body.appendChild(script);
 
-            script.addEventListener("load", () => {
-                console.log("Eyeson iframe API loaded");
-                EyesonIframe = window.EyesonIframe;
-                initializeForm();
-            });
+            function loadEyesonScript() {
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement("script");
+                    script.src = "https://app.eyeson.team/iframe-api.js";
+                    script.async = true;
+                    script.onload = () => {
+                        console.log("Eyeson iframe API loaded");
+                        EyesonIframe = window.EyesonIframe;
+                        resolve();
+                    };
+                    script.onerror = reject;
+                    document.body.appendChild(script);
+                });
+            }
 
-            function initializeForm() {
+            async function initializeForm() {
                 const startForm = document.getElementById("start-form");
                 const apiKeyInput = document.getElementById("api-key");
                 const videoContainer =
@@ -112,9 +117,13 @@
                         iframeContainer.style.height = "100%";
                         videoContainer.appendChild(iframeContainer);
 
+                        // Ensure the container is in the DOM
+                        await new Promise((resolve) => setTimeout(resolve, 0));
+
                         console.log("Initializing EyesonIframe...");
                         const eyesonIframe = new EyesonIframe({
-                            container: "#eyeson-container",
+                            container:
+                                document.getElementById("eyeson-container"),
                             accessKey: data.access_key,
                             options: {
                                 width: "100%",
@@ -160,6 +169,15 @@
                     }
                 });
             }
+
+            (async function () {
+                try {
+                    await loadEyesonScript();
+                    await initializeForm();
+                } catch (error) {
+                    console.error("Failed to initialize:", error);
+                }
+            })();
         </script>
     </body>
 </html>
