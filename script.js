@@ -137,6 +137,19 @@ function setupRecordingUpdateListener() {
   recordingUpdateCallback = handleRecordingUpdate;
   window.addEventListener("message", recordingUpdateCallback);
 
+  // Also listen for ActionCable messages
+  if (typeof ActionCable !== "undefined") {
+    ActionCable.logger.enabled = true;
+    const cable = ActionCable.createConsumer(`${API_BASE_URL}/cable`);
+    cable.subscriptions.create("RoomChannel", {
+      received: (data) => {
+        if (data.type === "recording_update") {
+          handleRecordingUpdate({ data: JSON.stringify(data) });
+        }
+      },
+    });
+  }
+
   recordingIdTimeout = setTimeout(() => {
     console.warn("Timeout waiting for recording ID");
     recordingLink.textContent =
@@ -146,22 +159,33 @@ function setupRecordingUpdateListener() {
 }
 
 function handleRecordingUpdate(event) {
-  if (event.data && typeof event.data === "string") {
+  let data;
+  if (typeof event.data === "string") {
     try {
-      const data = JSON.parse(event.data);
-      if (
-        data.type === "recording_update" &&
-        data.recording &&
-        data.recording.id
-      ) {
-        currentRecordingId = data.recording.id;
-        console.log("Received recording ID:", currentRecordingId);
-        recordingLink.textContent = `Recording ID: ${currentRecordingId}`;
-        cleanupRecordingListeners();
-      }
+      data = JSON.parse(event.data);
     } catch (error) {
       console.warn("Error parsing recording update:", error);
+      return;
     }
+  } else if (typeof event.data === "object") {
+    data = event.data;
+  } else {
+    console.warn("Unexpected event data type:", typeof event.data);
+    return;
+  }
+
+  if (data.type === "recording_update" && data.recording && data.recording.id) {
+    currentRecordingId = data.recording.id;
+    console.log("Received recording ID:", currentRecordingId);
+    recordingLink.textContent = `Recording ID: ${currentRecordingId}`;
+
+    if (data.recording.links && data.recording.links.download) {
+      recordingLink.innerHTML = `<a href="${data.recording.links.download}" target="_blank">Download Recording</a>`;
+    } else {
+      recordingLink.textContent = `Recording ID: ${currentRecordingId} (Download link not available yet)`;
+    }
+
+    cleanupRecordingListeners();
   }
 }
 
