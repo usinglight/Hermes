@@ -238,7 +238,7 @@ function handleError(context, error) {
 }
 
 function setLoading(isLoading) {
-  // Implement loading state UI changes here
+  // loading state UI changes
   joinButton.disabled = isLoading;
-  // Add more UI elements to indicate loading state
+  // more UI elements to indicate loading state
 }
