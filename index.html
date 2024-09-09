@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="mean">
+<html lang="en">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -63,11 +63,13 @@
 
             let accessKey = "";
             let isRecording = false;
+            let currentRecordingId = null;
+            let apiKey = "";
 
             startForm.addEventListener("submit", async (e) => {
                 e.preventDefault();
                 errorMessage.textContent = "";
-                const apiKey = apiKeyInput.value.trim();
+                apiKey = apiKeyInput.value.trim();
 
                 try {
                     console.log("Attempting to create room...");
@@ -117,7 +119,12 @@
                     try {
                         const response = await fetch(
                             `https://api.eyeson.team/rooms/${accessKey}/recording`,
-                            { method: "POST" },
+                            {
+                                method: "POST",
+                                headers: {
+                                    Authorization: apiKey,
+                                },
+                            },
                         );
 
                         if (!response.ok) {
@@ -126,9 +133,14 @@
                             );
                         }
 
+                        const data = await response.json();
+                        currentRecordingId = data.id;
                         isRecording = true;
                         toggleRecordingButton.textContent = "Stop Recording";
-                        console.log("Recording started");
+                        console.log(
+                            "Recording started, ID:",
+                            currentRecordingId,
+                        );
                     } catch (error) {
                         console.error("Error starting recording:", error);
                         errorMessage.textContent = `Error starting recording: ${error.message}`;
@@ -137,7 +149,12 @@
                     try {
                         const response = await fetch(
                             `https://api.eyeson.team/rooms/${accessKey}/recording`,
-                            { method: "DELETE" },
+                            {
+                                method: "DELETE",
+                                headers: {
+                                    Authorization: apiKey,
+                                },
+                            },
                         );
 
                         if (!response.ok) {
@@ -150,8 +167,8 @@
                         toggleRecordingButton.textContent = "Start Recording";
                         console.log("Recording stopped");
 
-                        // Wait for a short period before fetching the recording
-                        setTimeout(fetchRecordingLink, 5000);
+                        // Fetch the recording details immediately
+                        fetchRecordingLink();
                     } catch (error) {
                         console.error("Error stopping recording:", error);
                         errorMessage.textContent = `Error stopping recording: ${error.message}`;
@@ -160,35 +177,33 @@
             });
 
             async function fetchRecordingLink() {
+                if (!currentRecordingId) {
+                    recordingLink.textContent = "No recording ID available.";
+                    return;
+                }
+
                 try {
-                    const recordingsResponse = await fetch(
-                        `https://api.eyeson.team/rooms/${accessKey}/recordings`,
+                    const response = await fetch(
+                        `https://api.eyeson.team/recordings/${currentRecordingId}`,
+                        {
+                            headers: {
+                                Authorization: apiKey,
+                            },
+                        },
                     );
 
-                    if (!recordingsResponse.ok) {
+                    if (!response.ok) {
                         throw new Error(
-                            `HTTP error! status: ${recordingsResponse.status}`,
+                            `HTTP error! status: ${response.status}`,
                         );
                     }
 
-                    const recordings = await recordingsResponse.json();
-                    if (recordings.length > 0) {
-                        const recordingId = recordings[0].id;
-                        const recordingDetails = await fetch(
-                            `https://api.eyeson.team/recordings/${recordingId}`,
-                        );
-
-                        if (!recordingDetails.ok) {
-                            throw new Error(
-                                `HTTP error! status: ${recordingDetails.status}`,
-                            );
-                        }
-
-                        const recordingData = await recordingDetails.json();
+                    const recordingData = await response.json();
+                    if (recordingData.links && recordingData.links.download) {
                         recordingLink.innerHTML = `<a href="${recordingData.links.download}" target="_blank">Download Recording</a>`;
                     } else {
                         recordingLink.textContent =
-                            "No recordings found. Please try again in a few moments.";
+                            "Recording link not available yet. Please try again in a few moments.";
                     }
                 } catch (error) {
                     console.error("Error fetching recording details:", error);
