@@ -51,6 +51,13 @@
             const videoContainer = document.getElementById("video-container");
             const errorMessage = document.getElementById("error-message");
 
+            console.log("Initial DOM elements:", {
+                startForm,
+                apiKeyInput,
+                videoContainer,
+                errorMessage,
+            });
+
             startForm.addEventListener("submit", async (e) => {
                 e.preventDefault();
                 errorMessage.textContent = "";
@@ -82,10 +89,19 @@
                     console.log("Room created successfully:", data);
                     console.log("Access Key:", data.access_key);
 
-                    console.log("Initializing EyesonIframe...");
+                    console.log("Preparing video container...");
+                    videoContainer.innerHTML = ""; // Clear any existing content
+                    videoContainer.style.display = "block";
 
+                    console.log("Creating iframe container...");
+                    const iframeContainer = document.createElement("div");
+                    iframeContainer.style.width = "100%";
+                    iframeContainer.style.height = "100%";
+                    videoContainer.appendChild(iframeContainer);
+
+                    console.log("Initializing EyesonIframe...");
                     const eyesonIframe = new EyesonIframe({
-                        container: videoContainer,
+                        container: iframeContainer,
                         accessKey: data.access_key,
                         options: {
                             width: "100%",
@@ -104,7 +120,6 @@
                     console.log("EyesonIframe initialized");
 
                     startForm.style.display = "none";
-                    videoContainer.style.display = "block";
                 } catch (error) {
                     console.error("Error:", error);
                     if (error.response) {
@@ -125,12 +140,6 @@
                     errorMessage.textContent = `Error: ${error.message}`;
                 }
             });
-
-            // Check if elements are correctly selected
-            console.log("startForm:", startForm);
-            console.log("apiKeyInput:", apiKeyInput);
-            console.log("videoContainer:", videoContainer);
-            console.log("errorMessage:", errorMessage);
         </script>
     </body>
 </html>
