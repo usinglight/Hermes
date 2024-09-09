@@ -12,8 +12,8 @@
         color: #333;
     }
     #videoContainer {
-        width: 640px;
-        height: 480px;
+        width: 800px;
+        height: 600px;
         background-color: #000;
         margin: 20px 0;
         display: flex;
