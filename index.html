@@ -81,8 +81,15 @@
                     console.log("Room created successfully:", data);
 
                     console.log("Initializing EyesonIframe...");
+
+                    // Create a new div element to host the iframe
+                    const iframeContainer = document.createElement("div");
+                    iframeContainer.style.width = "100%";
+                    iframeContainer.style.height = "100%";
+                    videoContainer.appendChild(iframeContainer);
+
                     const eyesonIframe = new EyesonIframe({
-                        container: videoContainer,
+                        container: iframeContainer,
                         accessKey: data.access_key,
                         options: {
                             width: "100%",
