@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Simple Eyeson Video Call</title>
+        <title>Simple Eyeson Video Call with Recording</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -12,7 +12,8 @@
                 align-items: center;
                 padding: 20px;
             }
-            #start-form {
+            #start-form,
+            #controls {
                 margin-bottom: 20px;
             }
             #video-container {
@@ -26,29 +27,43 @@
                 color: red;
                 margin-top: 10px;
             }
+            #recording-link {
+                margin-top: 10px;
+            }
         </style>
     </head>
     <body>
-        <h1>Simple Eyeson Video Call</h1>
+        <h1>Simple Eyeson Video Call with Recording</h1>
         <form id="start-form">
             <label for="api-key">API Key:</label>
             <input
                 type="text"
                 id="api-key"
-                <!-- /* remove before flight */ -->
                 value="KQnpKyEwkSKnP4xlArVeKhJJTQNkucZz776qL0PSXi"
                 required
             />
             <button type="submit">Start Call</button>
         </form>
+        <div id="controls" style="display: none">
+            <button id="toggle-recording">Start Recording</button>
+        </div>
         <div id="error-message"></div>
         <div id="video-container"></div>
+        <div id="recording-link"></div>
 
         <script>
             const startForm = document.getElementById("start-form");
             const apiKeyInput = document.getElementById("api-key");
             const videoContainer = document.getElementById("video-container");
             const errorMessage = document.getElementById("error-message");
+            const controls = document.getElementById("controls");
+            const toggleRecordingButton =
+                document.getElementById("toggle-recording");
+            const recordingLink = document.getElementById("recording-link");
+
+            let accessKey = "";
+            let isRecording = false;
+            let recordingId = "";
 
             startForm.addEventListener("submit", async (e) => {
                 e.preventDefault();
@@ -80,29 +95,113 @@
                     const data = await response.json();
                     console.log("Room created successfully:", data);
                     console.log("Access Key:", data.access_key);
+                    accessKey = data.access_key;
 
                     videoContainer.innerHTML = `
                         <iframe
-                            src="https://app.eyeson.team/?${data.access_key}"
+                            src="https://app.eyeson.team/?${accessKey}"
                             allow="camera;microphone;fullscreen;display-capture;autoplay"
                             style="width: 100%; height: 100%; border: none;">
                         </iframe>
                     `;
                     videoContainer.style.display = "block";
                     startForm.style.display = "none";
-
-                    // You can add event listeners for iframe messages here if needed
-                    window.addEventListener("message", (event) => {
-                        if (event.origin !== "https://app.eyeson.team") return;
-                        console.log(
-                            "Received message from iframe:",
-                            event.data,
-                        );
-                        // Handle different message types as needed
-                    });
+                    controls.style.display = "block";
                 } catch (error) {
                     console.error("Error:", error);
                     errorMessage.textContent = `Error: ${error.message}`;
+                }
+            });
+
+            toggleRecordingButton.addEventListener("click", async () => {
+                if (!isRecording) {
+                    try {
+                        const response = await fetch(
+                            `https://api.eyeson.team/rooms/${accessKey}/recording`,
+                            {
+                                method: "POST",
+                                headers: {
+                                    Authorization: apiKeyInput.value.trim(),
+                                },
+                            },
+                        );
+
+                        if (!response.ok) {
+                            throw new Error(
+                                `HTTP error! status: ${response.status}`,
+                            );
+                        }
+
+                        isRecording = true;
+                        toggleRecordingButton.textContent = "Stop Recording";
+                        console.log("Recording started");
+                    } catch (error) {
+                        console.error("Error starting recording:", error);
+                        errorMessage.textContent = `Error starting recording: ${error.message}`;
+                    }
+                } else {
+                    try {
+                        const response = await fetch(
+                            `https://api.eyeson.team/rooms/${accessKey}/recording`,
+                            {
+                                method: "DELETE",
+                                headers: {
+                                    Authorization: apiKeyInput.value.trim(),
+                                },
+                            },
+                        );
+
+                        if (!response.ok) {
+                            throw new Error(
+                                `HTTP error! status: ${response.status}`,
+                            );
+                        }
+
+                        isRecording = false;
+                        toggleRecordingButton.textContent = "Start Recording";
+                        console.log("Recording stopped");
+
+                        // Fetch the recording details
+                        const recordingsResponse = await fetch(
+                            `https://api.eyeson.team/rooms/${accessKey}/recordings`,
+                            {
+                                headers: {
+                                    Authorization: apiKeyInput.value.trim(),
+                                },
+                            },
+                        );
+
+                        if (!recordingsResponse.ok) {
+                            throw new Error(
+                                `HTTP error! status: ${recordingsResponse.status}`,
+                            );
+                        }
+
+                        const recordings = await recordingsResponse.json();
+                        if (recordings.length > 0) {
+                            recordingId = recordings[0].id;
+                            const recordingDetails = await fetch(
+                                `https://api.eyeson.team/recordings/${recordingId}`,
+                                {
+                                    headers: {
+                                        Authorization: apiKeyInput.value.trim(),
+                                    },
+                                },
+                            );
+
+                            if (!recordingDetails.ok) {
+                                throw new Error(
+                                    `HTTP error! status: ${recordingDetails.status}`,
+                                );
+                            }
+
+                            const recordingData = await recordingDetails.json();
+                            recordingLink.innerHTML = `<a href="${recordingData.links.download}" target="_blank">Download Recording</a>`;
+                        }
+                    } catch (error) {
+                        console.error("Error stopping recording:", error);
+                        errorMessage.textContent = `Error stopping recording: ${error.message}`;
+                    }
                 }
             });
         </script>
