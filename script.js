@@ -1,3 +1,5 @@
+const API_URL = "https://api.eyeson.team";
+
 const apiKeyInput = document.getElementById("apiKeyInput");
 const joinButton = document.getElementById("joinButton");
 const toggleRecordingButton = document.getElementById("toggleRecordingButton");
@@ -44,7 +46,7 @@ function validateApiKey(key) {
 }
 
 async function createRoom() {
-  const response = await fetch("https://api.eyeson.team/rooms", {
+  const response = await fetch(`${API_URL}/rooms`, {
     method: "POST",
     headers: {
       Authorization: apiKey,
@@ -106,13 +108,10 @@ async function stopRecording() {
 }
 
 async function sendRecordingRequest(method) {
-  const response = await fetch(
-    `https://api.eyeson.team/rooms/${accessKey}/recording`,
-    {
-      method,
-      headers: { Authorization: apiKey },
-    },
-  );
+  const response = await fetch(`${API_BASE_URL}/rooms/${accessKey}/recording`, {
+    method,
+    headers: { Authorization: apiKey },
+  });
 
   if (!response.ok) {
     if (response.status === 404 && method === "DELETE") {
