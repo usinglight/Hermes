@@ -108,7 +108,7 @@ async function stopRecording() {
 }
 
 async function sendRecordingRequest(method) {
-  const response = await fetch(`${API_BASE_URL}/rooms/${accessKey}/recording`, {
+  const response = await fetch(`${API_URL}/rooms/${accessKey}/recording`, {
     method,
     headers: { Authorization: apiKey },
   });
@@ -200,12 +200,9 @@ async function fetchRecordingLink(retries = 3) {
 }
 
 async function fetchRecordingData() {
-  const response = await fetch(
-    `https://api.eyeson.team/recordings/${currentRecordingId}`,
-    {
-      headers: { Authorization: apiKey },
-    },
-  );
+  const response = await fetch(`${API_URL}/recordings/${currentRecordingId}`, {
+    headers: { Authorization: apiKey },
+  });
 
   if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
   return response.json();
