@@ -8,15 +8,24 @@
     </head>
     <body>
         <h1>Hermes - Async Video Communication</h1>
-        <input type="text" id="apiKeyInput" placeholder="Enter your API key" />
-        <div id="videoContainer">
-            <p>Video will appear here after joining the meeting.</p>
+        <div class="content-container">
+            <div id="videoContainer">
+                <p>Video will appear here after joining the meeting.</p>
+            </div>
+            <div class="controls">
+                <input
+                    type="text"
+                    id="apiKeyInput"
+                    placeholder="Enter your API key"
+                />
+                <button id="joinButton">Join Meeting</button>
+                <button id="toggleRecordingButton" disabled>
+                    Start Recording
+                </button>
+                <div id="errorMessage"></div>
+                <div id="recordingLink"></div>
+            </div>
         </div>
-        <button id="joinButton">Join Meeting</button>
-        <button id="toggleRecordingButton" disabled>Start Recording</button>
-        <div id="errorMessage"></div>
-        <div id="recordingLink"></div>
-
         <script>
             let apiKey = "";
             let accessKey = "";
