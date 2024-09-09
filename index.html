@@ -44,140 +44,66 @@
         <div id="video-container"></div>
 
         <script>
-            let EyesonIframe;
+            const startForm = document.getElementById("start-form");
+            const apiKeyInput = document.getElementById("api-key");
+            const videoContainer = document.getElementById("video-container");
+            const errorMessage = document.getElementById("error-message");
 
-            function loadEyesonScript() {
-                return new Promise((resolve, reject) => {
-                    const script = document.createElement("script");
-                    script.src = "https://app.eyeson.team/iframe-api.js";
-                    script.async = true;
-                    script.onload = () => {
-                        console.log("Eyeson iframe API loaded");
-                        EyesonIframe = window.EyesonIframe;
-                        resolve();
-                    };
-                    script.onerror = reject;
-                    document.body.appendChild(script);
-                });
-            }
+            startForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                errorMessage.textContent = "";
+                const apiKey = apiKeyInput.value.trim();
 
-            async function initializeForm() {
-                const startForm = document.getElementById("start-form");
-                const apiKeyInput = document.getElementById("api-key");
-                const videoContainer =
-                    document.getElementById("video-container");
-                const errorMessage = document.getElementById("error-message");
-
-                console.log("Initial DOM elements:", {
-                    startForm,
-                    apiKeyInput,
-                    videoContainer,
-                    errorMessage,
-                });
-
-                startForm.addEventListener("submit", async (e) => {
-                    e.preventDefault();
-                    errorMessage.textContent = "";
-                    const apiKey = apiKeyInput.value.trim();
-
-                    try {
-                        console.log("Attempting to create room...");
-                        const response = await fetch(
-                            "https://api.eyeson.team/rooms",
-                            {
-                                method: "POST",
-                                headers: {
-                                    Authorization: apiKey,
-                                    "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({
-                                    user: { name: "User" },
-                                }),
-                            },
-                        );
-
-                        if (!response.ok) {
-                            throw new Error(
-                                `HTTP error! status: ${response.status}`,
-                            );
-                        }
-
-                        const data = await response.json();
-                        console.log("Room created successfully:", data);
-                        console.log("Access Key:", data.access_key);
-
-                        console.log("Preparing video container...");
-                        videoContainer.innerHTML = ""; // Clear any existing content
-                        videoContainer.style.display = "block";
-
-                        console.log("Creating iframe container...");
-                        const iframeContainer = document.createElement("div");
-                        iframeContainer.id = "eyeson-container";
-                        iframeContainer.style.width = "100%";
-                        iframeContainer.style.height = "100%";
-                        videoContainer.appendChild(iframeContainer);
-
-                        // Ensure the container is in the DOM
-                        await new Promise((resolve) => setTimeout(resolve, 0));
-
-                        console.log("Initializing EyesonIframe...");
-                        const eyesonIframe = new EyesonIframe({
-                            container:
-                                document.getElementById("eyeson-container"),
-                            accessKey: data.access_key,
-                            options: {
-                                width: "100%",
-                                height: "100%",
-                            },
-                        });
-
-                        eyesonIframe.on("ready", () => {
-                            console.log("EyesonIframe is ready");
-                        });
-
-                        eyesonIframe.on("error", (error) => {
-                            console.error("EyesonIframe error:", error);
-                        });
-
-                        console.log("EyesonIframe initialized");
-
-                        startForm.style.display = "none";
-                    } catch (error) {
-                        console.error("Error:", error);
-                        if (error.response) {
-                            console.error(
-                                "Response data:",
-                                error.response.data,
-                            );
-                            console.error(
-                                "Response status:",
-                                error.response.status,
-                            );
-                            console.error(
-                                "Response headers:",
-                                error.response.headers,
-                            );
-                        } else if (error.request) {
-                            console.error(
-                                "No response received:",
-                                error.request,
-                            );
-                        } else {
-                            console.error("Error details:", error.message);
-                        }
-                        errorMessage.textContent = `Error: ${error.message}`;
-                    }
-                });
-            }
-
-            (async function () {
                 try {
-                    await loadEyesonScript();
-                    await initializeForm();
+                    console.log("Attempting to create room...");
+                    const response = await fetch(
+                        "https://api.eyeson.team/rooms",
+                        {
+                            method: "POST",
+                            headers: {
+                                Authorization: apiKey,
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                user: { name: "User" },
+                            }),
+                        },
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(
+                            `HTTP error! status: ${response.status}`,
+                        );
+                    }
+
+                    const data = await response.json();
+                    console.log("Room created successfully:", data);
+                    console.log("Access Key:", data.access_key);
+
+                    videoContainer.innerHTML = `
+                        <iframe
+                            src="https://app.eyeson.team/?${data.access_key}"
+                            allow="camera;microphone;fullscreen;display-capture;autoplay"
+                            style="width: 100%; height: 100%; border: none;">
+                        </iframe>
+                    `;
+                    videoContainer.style.display = "block";
+                    startForm.style.display = "none";
+
+                    // You can add event listeners for iframe messages here if needed
+                    window.addEventListener("message", (event) => {
+                        if (event.origin !== "https://app.eyeson.team") return;
+                        console.log(
+                            "Received message from iframe:",
+                            event.data,
+                        );
+                        // Handle different message types as needed
+                    });
                 } catch (error) {
-                    console.error("Failed to initialize:", error);
+                    console.error("Error:", error);
+                    errorMessage.textContent = `Error: ${error.message}`;
                 }
-            })();
+            });
         </script>
     </body>
 </html>
