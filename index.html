@@ -19,6 +19,7 @@
                 width: 100%;
                 max-width: 800px;
                 height: 600px;
+                border: 1px solid #ccc;
                 display: none;
             }
             #error-message {
@@ -79,22 +80,25 @@
 
                     const data = await response.json();
                     console.log("Room created successfully:", data);
+                    console.log("Access Key:", data.access_key);
 
                     console.log("Initializing EyesonIframe...");
 
-                    // Create a new div element to host the iframe
-                    const iframeContainer = document.createElement("div");
-                    iframeContainer.style.width = "100%";
-                    iframeContainer.style.height = "100%";
-                    videoContainer.appendChild(iframeContainer);
-
                     const eyesonIframe = new EyesonIframe({
-                        container: iframeContainer,
+                        container: videoContainer,
                         accessKey: data.access_key,
                         options: {
                             width: "100%",
                             height: "100%",
                         },
+                    });
+
+                    eyesonIframe.on("ready", () => {
+                        console.log("EyesonIframe is ready");
+                    });
+
+                    eyesonIframe.on("error", (error) => {
+                        console.error("EyesonIframe error:", error);
                     });
 
                     console.log("EyesonIframe initialized");
@@ -103,10 +107,22 @@
                     videoContainer.style.display = "block";
                 } catch (error) {
                     console.error("Error:", error);
-                    errorMessage.textContent = `Error: ${error.message}`;
-                    if (error instanceof TypeError) {
-                        console.error("TypeError details:", error.stack);
+                    if (error.response) {
+                        console.error("Response data:", error.response.data);
+                        console.error(
+                            "Response status:",
+                            error.response.status,
+                        );
+                        console.error(
+                            "Response headers:",
+                            error.response.headers,
+                        );
+                    } else if (error.request) {
+                        console.error("No response received:", error.request);
+                    } else {
+                        console.error("Error details:", error.message);
                     }
+                    errorMessage.textContent = `Error: ${error.message}`;
                 }
             });
 
