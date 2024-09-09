@@ -24,7 +24,7 @@ joinButton.addEventListener("click", async () => {
         Authorization: apiKey,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ user: { name: "Test User" } }),
+      body: JSON.stringify({ user: { name: "Hermes Messenger" } }),
     });
 
     if (!response.ok) {
