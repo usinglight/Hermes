@@ -1,90 +1,108 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Eyeson Video Call</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-        }
-        #start-form {
-            margin-bottom: 20px;
-        }
-        #video-container {
-            width: 100%;
-            max-width: 800px;
-            height: 600px;
-            display: none;
-        }
-        #error-message {
-            color: red;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-    <h1>Simple Eyeson Video Call</h1>
-    <form id="start-form">
-        <label for="api-key">API Key:</label>
-        <input type="text" id="api-key" required>
-        <button type="submit">Start Call</button>
-    </form>
-    <div id="error-message"></div>
-    <div id="video-container"></div>
-
-    <script type="module">
-        import EyesonIframe from 'https://app.eyeson.team/iframe-api-esm.js';
-
-        const startForm = document.getElementById('start-form');
-        const apiKeyInput = document.getElementById('api-key');
-        const videoContainer = document.getElementById('video-container');
-        const errorMessage = document.getElementById('error-message');
-
-        startForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            errorMessage.textContent = '';
-            const apiKey = apiKeyInput.value.trim();
-
-            try {
-                const response = await fetch('https://api.eyeson.team/rooms', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': apiKey,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        user: { name: 'User' }
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const data = await response.json();
-                
-                const eyesonIframe = new EyesonIframe({
-                    container: videoContainer,
-                    accessKey: data.access_key,
-                    options: {
-                        width: '100%',
-                        height: '100%'
-                    }
-                });
-
-                startForm.style.display = 'none';
-                videoContainer.style.display = 'block';
-
-            } catch (error) {
-                console.error('Error:', error);
-                errorMessage.textContent = `Error: ${error.message}`;
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Simple Eyeson Video Call</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                padding: 20px;
             }
-        });
-    </script>
-</body>
+            #start-form {
+                margin-bottom: 20px;
+            }
+            #video-container {
+                width: 100%;
+                max-width: 800px;
+                height: 600px;
+                display: none;
+            }
+            #error-message {
+                color: red;
+                margin-top: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Simple Eyeson Video Call</h1>
+        <form id="start-form">
+            <label for="api-key">API Key:</label>
+            <input type="text" id="api-key" required />
+            <button type="submit">Start Call</button>
+        </form>
+        <div id="error-message"></div>
+        <div id="video-container"></div>
+
+        <script type="module">
+            import EyesonIframe from "https://app.eyeson.team/iframe-api-esm.js";
+
+            const startForm = document.getElementById("start-form");
+            const apiKeyInput = document.getElementById("api-key");
+            const videoContainer = document.getElementById("video-container");
+            const errorMessage = document.getElementById("error-message");
+
+            startForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                errorMessage.textContent = "";
+                const apiKey = apiKeyInput.value.trim();
+
+                try {
+                    console.log("Attempting to create room...");
+                    const response = await fetch(
+                        "https://api.eyeson.team/rooms",
+                        {
+                            method: "POST",
+                            headers: {
+                                Authorization: apiKey,
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({
+                                user: { name: "User" },
+                            }),
+                        },
+                    );
+
+                    if (!response.ok) {
+                        throw new Error(
+                            `HTTP error! status: ${response.status}`,
+                        );
+                    }
+
+                    const data = await response.json();
+                    console.log("Room created successfully:", data);
+
+                    console.log("Initializing EyesonIframe...");
+                    const eyesonIframe = new EyesonIframe({
+                        container: videoContainer,
+                        accessKey: data.access_key,
+                        options: {
+                            width: "100%",
+                            height: "100%",
+                        },
+                    });
+
+                    console.log("EyesonIframe initialized");
+
+                    startForm.style.display = "none";
+                    videoContainer.style.display = "block";
+                } catch (error) {
+                    console.error("Error:", error);
+                    errorMessage.textContent = `Error: ${error.message}`;
+                    if (error instanceof TypeError) {
+                        console.error("TypeError details:", error.stack);
+                    }
+                }
+            });
+
+            // Check if elements are correctly selected
+            console.log("startForm:", startForm);
+            console.log("apiKeyInput:", apiKeyInput);
+            console.log("videoContainer:", videoContainer);
+            console.log("errorMessage:", errorMessage);
+        </script>
+    </body>
 </html>
